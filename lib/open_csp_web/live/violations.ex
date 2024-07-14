@@ -41,10 +41,12 @@ defmodule OpenCspWeb.Live.Violations do
           <.table_head>URI</.table_head>
           <.table_head>Directive</.table_head>
           <.table_head>Blocked URI</.table_head>
+          <.table_head>Browser</.table_head>
         </.table_row>
       </.table_header>
       <.table_body id="violations" phx-update="stream">
         <.table_row :for={{dom_id, violation} <- @streams.violations} id={dom_id}>
+          <% ua = UAParser.parse(violation.user_agent) %>
           <.table_cell>
             <.badge variant={
               if violation.disposition == :enforce, do: "destructive", else: "secondary"
@@ -56,6 +58,10 @@ defmodule OpenCspWeb.Live.Violations do
           <.table_cell><%= violation.url %></.table_cell>
           <.table_cell><%= violation.effective_directive %></.table_cell>
           <.table_cell><%= violation.blocked_url %></.table_cell>
+          <.table_cell>
+            <%= to_string(ua) %>
+            <%= ua.os.family %>
+          </.table_cell>
         </.table_row>
       </.table_body>
     </.table>
