@@ -23,8 +23,8 @@ defmodule OpenCspWeb.ReportController do
   # Handle single report, currently used by Safari
   def handle_report(conn, %{"type" => "csp-violation"} = report) do
     user_agent = get_req_header(conn, "user-agent") |> List.first()
+    report = Map.put(report, "user_agent", user_agent)
 
-    report = modernize_report(Map.put(report, "user_agent", user_agent))
     handle_report(conn, %{"_json" => [report]})
   end
 
