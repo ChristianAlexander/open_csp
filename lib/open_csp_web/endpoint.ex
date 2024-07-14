@@ -38,11 +38,12 @@ defmodule OpenCspWeb.Endpoint do
     param_key: "request_logger",
     cookie_key: "request_logger"
 
+  plug RemoteIp
   plug Plug.RequestId
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 
   plug Plug.Parsers,
-    parsers: [:urlencoded, :multipart, :json],
+    parsers: [:urlencoded, :multipart, :json, OpenCspWeb.Plug.Parsers.CspReport],
     pass: ["*/*"],
     json_decoder: Phoenix.json_library()
 
