@@ -23,6 +23,7 @@ defmodule OpenCspWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    live "/violations", Live.Violations
   end
 
   # Other scopes may use custom stacks.

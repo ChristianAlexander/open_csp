@@ -17,9 +17,24 @@ defmodule OpenCsp.Reporting do
       [%CspViolation{}, ...]
 
   """
-  def list_csp_violations do
-    Repo.all(CspViolation)
+  def list_csp_violations(options \\ %{}) do
+    from(CspViolation)
+    |> sort(options)
+    |> with_limit(options)
+    |> Repo.all()
   end
+
+  defp sort(query, %{sort_by: sort_by, sort_order: sort_order}) do
+    order_by(query, {^sort_order, ^sort_by})
+  end
+
+  defp sort(query, _options), do: query
+
+  defp with_limit(query, %{limit: limit}) do
+    limit(query, ^limit)
+  end
+
+  defp with_limit(query, _options), do: query
 
   @doc """
   Gets a single csp_violation.
@@ -56,14 +71,21 @@ defmodule OpenCsp.Reporting do
   end
 
   def create_violations_from_request(reports, remote_ip) do
-    reports
-    |> Enum.filter(&(&1["type"] == "csp-violation"))
-    |> Enum.with_index()
-    |> Enum.reduce(Ecto.Multi.new(), fn {report, index}, multi ->
-      changeset = CspViolation.from_report(report, remote_ip)
-      Ecto.Multi.insert(multi, index, changeset)
-    end)
-    |> Repo.transaction()
+    multi =
+      reports
+      |> Enum.filter(&(&1["type"] == "csp-violation"))
+      |> Enum.with_index()
+      |> Enum.reduce(Ecto.Multi.new(), fn {report, index}, multi ->
+        changeset = CspViolation.from_report(report, remote_ip)
+        Ecto.Multi.insert(multi, index, changeset)
+      end)
+
+    with {:ok, violations} <- Repo.transaction(multi) do
+      Enum.each(Map.values(violations), &OpenCsp.Reporting.CspViolation.broadcast_creation/1)
+      {:ok, violations}
+    else
+      error -> error
+    end
   end
 
   @doc """

@@ -9,13 +9,12 @@ module.exports = {
   content: [
     "./js/**/*.js",
     "../lib/open_csp_web.ex",
-    "../lib/open_csp_web/**/*.*ex"
+    "../lib/open_csp_web/**/*.*ex",
+    "../deps/salad_ui/lib/**/*.ex",
   ],
   theme: {
     extend: {
-      colors: {
-        brand: "#FD4F00",
-      }
+      colors: require("./tailwind.colors.json")
     },
   },
   plugins: [

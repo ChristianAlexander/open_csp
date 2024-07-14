@@ -59,7 +59,8 @@ defmodule OpenCsp.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
-      {:remote_ip, "~> 1.2"}
+      {:remote_ip, "~> 1.2"},
+      {:salad_ui, "~> 0.5.1"}
     ]
   end
 

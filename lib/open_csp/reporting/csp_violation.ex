@@ -51,6 +51,10 @@ defmodule OpenCsp.Reporting.CspViolation do
     ])
   end
 
+  def broadcast_creation(violation) do
+    Phoenix.PubSub.broadcast(OpenCsp.PubSub, "violations:all", {:new_violation, violation})
+  end
+
   def from_report(report, remote_ip \\ "") do
     report = normalize_violation_keys(report)
 
@@ -79,6 +83,8 @@ defmodule OpenCsp.Reporting.CspViolation do
         {"blockedURL", v} -> {"blocked_url", v}
         {"documentURL", v} -> {"document_url", v}
         {"originalPolicy", v} -> {"original_policy", v}
+        {"effectiveDirective", v} -> {"effective_directive", v}
+        {"statusCode", v} -> {"status_code", v}
         {k, v} -> {k, v}
       end)
 
