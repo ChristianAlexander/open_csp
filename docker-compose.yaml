@@ -1,0 +1,20 @@
+version: "3.2"
+services:
+  db:
+    image: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=open_csp
+
+  web:
+    build: .
+    ports:
+      - "4000:4000"
+    environment:
+      - DATABASE_URL=ecto://postgres:postgres@db/open_csp
+      # Make sure to generate a real one when shipping to production, using mix phx.gen.secret!
+      - SECRET_KEY_BASE=0aKAvLs+DHMSx8sSzxa4xExd6/tlxWix14gx12ZjI16jkBcYW5NeCuZ/FXxqz89s
+      - PHX_HOST=localhost
+    depends_on:
+      - db
