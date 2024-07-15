@@ -6,7 +6,7 @@ defmodule OpenCspWeb.Live.Violations do
   import SaladUI.Badge
   import SaladUI.Table
 
-  @page_limit 5
+  @page_limit 100
 
   def mount(_params, _session, socket) do
     violations =
