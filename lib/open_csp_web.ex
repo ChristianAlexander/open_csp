@@ -84,7 +84,7 @@ defmodule OpenCspWeb do
       # HTML escaping functionality
       import Phoenix.HTML
       # Core UI components and translation
-      import OpenCspWeb.CoreComponents, only: [flash_group: 1]
+      import OpenCspWeb.CoreComponents, only: [flash_group: 1, icon: 1]
       import OpenCspWeb.Gettext
 
       # Shortcut for generating JS commands

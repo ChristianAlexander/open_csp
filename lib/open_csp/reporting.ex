@@ -21,6 +21,7 @@ defmodule OpenCsp.Reporting do
     from(CspViolation)
     |> sort(options)
     |> with_limit(options)
+    |> with_filters(options)
     |> Repo.all()
   end
 
@@ -35,6 +36,26 @@ defmodule OpenCsp.Reporting do
   end
 
   defp with_limit(query, _options), do: query
+
+  defp with_filters(query, %{filters: filters}) do
+    Enum.reduce(filters, query, &apply_filter/2)
+  end
+
+  defp with_filters(query, _options), do: query
+
+  defp apply_filter({:disposition, disposition}, query) do
+    where(query, [c], c.disposition == ^disposition)
+  end
+
+  defp apply_filter({:happened_after, instant}, query) do
+    where(query, [c], c.happened_at >= ^instant)
+  end
+
+  defp apply_filter({:happened_before, instant}, query) do
+    where(query, [c], c.happened_at < ^instant)
+  end
+
+  defp apply_filter(_filter, query), do: query
 
   @doc """
   Gets a single csp_violation.
