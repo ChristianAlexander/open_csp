@@ -12,16 +12,19 @@ defmodule OpenCspWeb.ReportController do
   end
 
   # Handle legacy reports, currently used by Firefox
-  def handle_report(conn, %{"csp-report" => report}) do
+  def handle_report(conn, %{"csp-report" => report} = body) do
     user_agent = get_req_header(conn, "user-agent") |> List.first()
 
     report = modernize_report(Map.put(report, "user_agent", user_agent))
+    report = Map.put(report, "raw", body)
 
     handle_report(conn, %{"_json" => [report]})
   end
 
   # Handle single report, currently used by Safari
   def handle_report(conn, %{"type" => "csp-violation"} = report) do
+    report = Map.put(report, "raw", report)
+
     user_agent = get_req_header(conn, "user-agent") |> List.first()
     report = Map.put(report, "user_agent", user_agent)
 
@@ -35,6 +38,11 @@ defmodule OpenCspWeb.ReportController do
         {:error, _} -> "unknown"
         ip -> to_string(ip)
       end
+
+    reports =
+      Enum.map(reports, fn report ->
+        Map.put_new(report, "raw", report)
+      end)
 
     case OpenCsp.Reporting.create_violations_from_request(reports, remote_ip) do
       {:ok, _} ->

@@ -17,6 +17,7 @@ defmodule OpenCsp.Reporting.CspViolation do
     field :sample, :string
     field :effective_directive, :string
     field :remote_ip, :string
+    field :raw, :map
 
     timestamps(type: :utc_datetime)
   end
@@ -29,7 +30,8 @@ defmodule OpenCsp.Reporting.CspViolation do
       :status_code,
       :url,
       :user_agent,
-      :remote_ip
+      :remote_ip,
+      :raw
     ])
     |> cast_from_body(attrs, [
       :blocked_url,
