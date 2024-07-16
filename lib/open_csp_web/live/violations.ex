@@ -7,6 +7,8 @@ defmodule OpenCspWeb.Live.Violations do
   import SaladUI.Button
   import SaladUI.DropdownMenu
   import SaladUI.Menu
+  import SaladUI.Separator
+  import SaladUI.Sheet
   import SaladUI.Table
 
   @max_page_limit 500
@@ -181,6 +183,7 @@ defmodule OpenCspWeb.Live.Violations do
           <.table_head>Directive</.table_head>
           <.table_head>Blocked URI</.table_head>
           <.table_head>Browser</.table_head>
+          <.table_head></.table_head>
         </.table_row>
       </.table_header>
       <.table_body id="violations" phx-update="stream">
@@ -200,6 +203,43 @@ defmodule OpenCspWeb.Live.Violations do
           <.table_cell>
             <%= to_string(ua) %>
             <%= ua.os.family %>
+          </.table_cell>
+          <.table_cell>
+            <.sheet>
+              <.sheet_trigger target={"#{dom_id}-sheet"}>
+                <.button variant="outline">View Raw</.button>
+              </.sheet_trigger>
+              <.sheet_content id={"#{dom_id}-sheet"} class="md:max-w-xl space-y-4">
+                <.sheet_header>
+                  <.sheet_title>
+                    CSP Violation
+                  </.sheet_title>
+                  <.sheet_description>
+                    <h2 class="text-sm font-medium text-gray-500">Action</h2>
+                    <.badge
+                      variant={
+                        if violation.disposition == :enforce, do: "destructive", else: "secondary"
+                      }
+                      class="self-start"
+                    >
+                      <%= violation.disposition %>
+                    </.badge>
+                    <h2 class="text-sm font-medium text-gray-500">Time (UTC)</h2>
+                    <div><%= violation.happened_at %></div>
+                    <h2 class="text-sm font-medium text-gray-500">IP Address</h2>
+                    <div class="text-sm font-medium text-gray-900">
+                      <%= violation.remote_ip %>
+                    </div>
+                    <h2 class="text-sm font-medium text-gray-500">User Agent</h2>
+                    <div class="text-sm font-medium text-gray-900">
+                      <%= violation.user_agent %>
+                    </div>
+                  </.sheet_description>
+                </.sheet_header>
+                <.separator />
+                <pre class="overflow-x-auto p-4 bg-gray-100 rounded-md"><%= Jason.encode!(violation.raw, pretty: true) %></pre>
+              </.sheet_content>
+            </.sheet>
           </.table_cell>
         </.table_row>
       </.table_body>
