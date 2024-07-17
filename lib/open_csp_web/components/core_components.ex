@@ -231,8 +231,8 @@ defmodule OpenCspWeb.CoreComponents do
     <button
       type={@type}
       class={[
-        "phx-submit-loading:opacity-75 rounded-lg bg-zinc-900 hover:bg-zinc-700 py-2 px-3",
-        "text-sm font-semibold leading-6 text-white active:text-white/80",
+        "phx-submit-loading:opacity-75 rounded-lg bg-zinc-100 hover:bg-zinc-200 py-2 px-3",
+        "text-sm font-semibold leading-6 text-zinc-800 active:text-zinc-800/80",
         @class
       ]}
       {@rest}
@@ -335,7 +335,10 @@ defmodule OpenCspWeb.CoreComponents do
       <select
         id={@id}
         name={@name}
-        class="mt-2 block w-full rounded-md border border-gray-300 bg-white shadow-sm focus:border-zinc-400 focus:ring-0 sm:text-sm"
+        class={[
+          "mt-2 block w-full rounded-md border border-gray-300 bg-white shadow-sm focus:border-zinc-400 focus:ring-0 sm:text-sm",
+          @rest[:class]
+        ]}
         multiple={@multiple}
         {@rest}
       >

@@ -18,11 +18,21 @@ defmodule OpenCsp.Reporting do
 
   """
   def list_csp_violations(options \\ %{}) do
-    from(CspViolation)
-    |> sort(options)
-    |> with_limit(options)
-    |> with_filters(options)
-    |> Repo.all()
+    query =
+      from(CspViolation)
+      |> with_filters(options)
+      |> with_search(options)
+
+    total_count = Repo.aggregate(query, :count)
+
+    query =
+      query
+      |> sort(options)
+      |> with_pagination(options)
+
+    results = Repo.all(query)
+
+    %{violations: results, total_count: total_count}
   end
 
   defp sort(query, %{sort_by: sort_by, sort_order: sort_order}) do
@@ -30,12 +40,6 @@ defmodule OpenCsp.Reporting do
   end
 
   defp sort(query, _options), do: query
-
-  defp with_limit(query, %{limit: limit}) do
-    limit(query, ^limit)
-  end
-
-  defp with_limit(query, _options), do: query
 
   defp with_filters(query, %{filters: filters}) do
     Enum.reduce(filters, query, &apply_filter/2)
@@ -56,6 +60,36 @@ defmodule OpenCsp.Reporting do
   end
 
   defp apply_filter(_filter, query), do: query
+
+  defp with_search(query, %{search_value: ""}), do: query
+
+  defp with_search(query, %{search_value: search_value}) do
+    wildcard_query = "%#{search_value}%"
+
+    query
+    |> where(
+      [c],
+      ilike(c.url, ^wildcard_query) or
+        ilike(c.blocked_url, ^wildcard_query)
+    )
+  end
+
+  defp with_search(query, _options), do: query
+
+  defp with_pagination(query, %{page: page, limit: limit})
+       when is_integer(page) and is_integer(limit) do
+    offset = max(page - 1, 0) * limit
+
+    query
+    |> limit(^limit)
+    |> offset(^offset)
+  end
+
+  defp with_pagination(query, %{limit: limit}) do
+    limit(query, ^limit)
+  end
+
+  defp with_pagination(query, _options), do: query
 
   @doc """
   Gets a single csp_violation.
