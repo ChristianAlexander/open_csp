@@ -32,10 +32,12 @@ defmodule OpenCspWeb.Live.Violations do
 
     live? = page == 1 and not Keyword.has_key?(filters, :happened_before)
 
-    if live? and connected?(socket) do
-      Phoenix.PubSub.subscribe(OpenCsp.PubSub, "violations:all")
-    else
+    if connected?(socket) do
       Phoenix.PubSub.unsubscribe(OpenCsp.PubSub, "violations:all")
+
+      if live? do
+        Phoenix.PubSub.subscribe(OpenCsp.PubSub, "violations:all")
+      end
     end
 
     socket =
