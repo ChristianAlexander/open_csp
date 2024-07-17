@@ -345,7 +345,7 @@ defmodule OpenCspWeb.Live.Violations do
           <.table_cell>
             <.sheet>
               <.sheet_trigger target={"#{dom_id}-sheet"}>
-                <.button variant="outline">View Raw</.button>
+                <.button variant="outline">Details</.button>
               </.sheet_trigger>
               <.sheet_content id={"#{dom_id}-sheet"} class="md:max-w-xl space-y-4">
                 <.sheet_header>
