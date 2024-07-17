@@ -9,8 +9,8 @@ OpenCsp is a Phoenix LiveView application that handles Content Security Policy (
 - [x] Receive and store CSP reports
 - [x] View reports in a table
 - [x] Stream CSP reports in real-time
+- [x] Search / Filtering
 - [ ] Report grouping
-- [ ] Search / Filtering
 - [ ] Export
 - [ ] Notifications
 - [ ] User management
