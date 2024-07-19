@@ -4,10 +4,12 @@ defmodule OpenCsp.Reporting.CspViolation do
 
   alias __MODULE__
 
+  @dispositions [:enforce, :report]
+
   schema "csp_violations" do
     field :url, :string
     field :happened_at, :utc_datetime
-    field :disposition, Ecto.Enum, values: [:enforce, :report]
+    field :disposition, Ecto.Enum, values: @dispositions
     field :status_code, :integer
     field :blocked_url, :string
     field :document_url, :string
@@ -21,6 +23,8 @@ defmodule OpenCsp.Reporting.CspViolation do
 
     timestamps(type: :utc_datetime)
   end
+
+  def dispositions(), do: @dispositions
 
   @doc false
   def changeset(csp_violation, attrs) do

@@ -20,15 +20,14 @@ defmodule OpenCsp.Reporting do
   def list_csp_violations(options \\ %{}) do
     query =
       from(CspViolation)
-      |> with_filters(options)
-      |> with_search(options)
+      |> with_filter(options.filter)
 
     total_count = Repo.aggregate(query, :count)
 
     query =
       query
       |> sort(options)
-      |> with_pagination(options)
+      |> with_pagination(options.filter)
 
     results = Repo.all(query)
 
@@ -41,29 +40,30 @@ defmodule OpenCsp.Reporting do
 
   defp sort(query, _options), do: query
 
-  defp with_filters(query, %{filters: filters}) do
-    Enum.reduce(filters, query, &apply_filter/2)
+  defp with_filter(query, filter) do
+    Enum.reduce(filter, query, &apply_filter/2)
   end
 
   defp with_filters(query, _options), do: query
 
-  defp apply_filter({:disposition, disposition}, query) do
+  defp apply_filter({:disposition, disposition}, query)
+       when not is_nil(disposition) do
     where(query, [c], c.disposition == ^disposition)
   end
 
-  defp apply_filter({:happened_after, instant}, query) do
+  defp apply_filter({:happened_after, instant}, query)
+       when not is_nil(instant) do
     where(query, [c], c.happened_at >= ^instant)
   end
 
-  defp apply_filter({:happened_before, instant}, query) do
+  defp apply_filter({:happened_before, instant}, query)
+       when not is_nil(instant) do
     where(query, [c], c.happened_at < ^instant)
   end
 
-  defp apply_filter(_filter, query), do: query
+  defp apply_filter({:q, ""}, query), do: query
 
-  defp with_search(query, %{search_value: ""}), do: query
-
-  defp with_search(query, %{search_value: search_value}) do
+  defp apply_filter({:q, search_value}, query) do
     wildcard_query = "%#{search_value}%"
 
     query
@@ -74,9 +74,9 @@ defmodule OpenCsp.Reporting do
     )
   end
 
-  defp with_search(query, _options), do: query
+  defp apply_filter(_filter, query), do: query
 
-  defp with_pagination(query, %{page: page, limit: limit})
+  defp with_pagination(query, %{page: page, page_limit: limit})
        when is_integer(page) and is_integer(limit) do
     offset = max(page - 1, 0) * limit
 
@@ -85,7 +85,7 @@ defmodule OpenCsp.Reporting do
     |> offset(^offset)
   end
 
-  defp with_pagination(query, %{limit: limit}) do
+  defp with_pagination(query, %{page_limit: limit}) do
     limit(query, ^limit)
   end
 

@@ -1,4 +1,5 @@
 defmodule OpenCspWeb.Live.Violations do
+  alias OpenCspWeb.Forms.ViolationsFilterForm
   use OpenCspWeb, :live_view
 
   alias OpenCsp.Reporting
@@ -13,43 +14,31 @@ defmodule OpenCspWeb.Live.Violations do
 
   import OpenCspWeb.Components.Pagination
 
-  @max_page_limit 500
-
   def handle_params(params, _uri, socket) do
-    page_limit =
-      case Integer.parse(Map.get(params, "page_limit", "")) do
-        :error -> 50
-        {page_limit, _} -> min(page_limit, @max_page_limit)
-      end
+    case ViolationsFilterForm.parse(params) do
+      {:ok, filter} ->
+        socket = socket |> assign(filter: filter)
+        live? = ViolationsFilterForm.live?(filter)
 
-    page =
-      case Integer.parse(Map.get(params, "page", "")) do
-        :error -> 1
-        {page, _} -> max(page, 1)
-      end
+        if connected?(socket) do
+          Phoenix.PubSub.unsubscribe(OpenCsp.PubSub, "violations:all")
 
-    filters = Map.get(params, "filters", []) |> as_validated_filters()
+          if live? do
+            Phoenix.PubSub.subscribe(OpenCsp.PubSub, "violations:all")
+          end
+        end
 
-    live? = page == 1 and not Keyword.has_key?(filters, :happened_before)
+        socket =
+          socket
+          |> assign(filter: filter)
+          |> assign(live?: live?)
+          |> refetch_violations()
 
-    if connected?(socket) do
-      Phoenix.PubSub.unsubscribe(OpenCsp.PubSub, "violations:all")
+        {:noreply, socket}
 
-      if live? do
-        Phoenix.PubSub.subscribe(OpenCsp.PubSub, "violations:all")
-      end
+      {:error, _changeset} ->
+        {:noreply, push_patch(socket, to: ~p"/violations?#{ViolationsFilterForm.default()}")}
     end
-
-    socket =
-      socket
-      |> assign(page_limit: page_limit)
-      |> assign(filters: filters)
-      |> assign(page: page)
-      |> assign(search_value: Map.get(params, "q", ""))
-      |> assign(live?: live?)
-      |> refetch_violations()
-
-    {:noreply, socket}
   end
 
   def handle_info({:new_violation, violation}, socket) do
@@ -102,20 +91,17 @@ defmodule OpenCspWeb.Live.Violations do
   end
 
   defp refetch_violations(socket) do
-    page_limit = socket.assigns.page_limit
+    filter = socket.assigns.filter
 
     %{violations: violations, total_count: total_count} =
       Reporting.list_csp_violations(%{
         sort_by: :happened_at,
         sort_order: :desc,
-        limit: page_limit,
-        filters: socket.assigns.filters,
-        search_value: socket.assigns.search_value,
-        page: socket.assigns.page
+        filter: filter
       })
 
     socket
-    |> stream(:violations, violations, limit: page_limit, reset: true)
+    |> stream(:violations, violations, limit: filter.page_limit, reset: true)
     |> assign(total_count: total_count)
   end
 
@@ -144,14 +130,7 @@ defmodule OpenCspWeb.Live.Violations do
   end
 
   defp filtered_path(assigns) do
-    query_params = %{
-      filters: assigns.filters |> Enum.map(&as_query_param/1),
-      page_limit: assigns.page_limit,
-      q: assigns.search_value,
-      page: assigns.page
-    }
-
-    ~p"/violations?#{query_params}"
+    ~p"/violations?#{assigns.filter}"
   end
 
   defp as_query_param({key, %DateTime{} = value}) do
@@ -214,11 +193,14 @@ defmodule OpenCspWeb.Live.Violations do
     |> Keyword.new()
   end
 
-  defp page_count(%{page_limit: page_size, page: current_page, total_count: total_count}) do
+  defp page_count(%{
+         filter: %{page_limit: page_size, page: current_page},
+         total_count: total_count
+       }) do
     ceil(total_count / page_size)
   end
 
-  defp pages(%{page: current_page} = assigns) do
+  defp pages(%{filter: %{page: current_page}} = assigns) do
     for page_number <- 1..page_count(assigns)//1, abs(page_number - current_page) <= 2 do
       current_page? = page_number == current_page
       {page_number, current_page?}
@@ -234,7 +216,7 @@ defmodule OpenCspWeb.Live.Violations do
         </.dropdown_menu_trigger>
         <.dropdown_menu_content align="start">
           <.menu class="w-56">
-            <% current_disposition = Keyword.get(@filters, :disposition, "all") %>
+            <% current_disposition = @filter.disposition || "all" %>
             <.menu_label>Action</.menu_label>
             <.menu_group>
               <.menu_item phx-click="filter-disposition" disabled={current_disposition == "all"}>
@@ -269,7 +251,7 @@ defmodule OpenCspWeb.Live.Violations do
             phx-change="search"
             phx-debounce="500"
             name="search"
-            value={@search_value}
+            value={@filter.q}
           />
         </form>
       </div>
@@ -280,7 +262,7 @@ defmodule OpenCspWeb.Live.Violations do
             type="select"
             name="size"
             class="min-w-24"
-            value={@page_limit}
+            value={@filter.page_limit}
             options={[5, 10, 20, 50, 100]}
           />
         </form>
@@ -294,8 +276,8 @@ defmodule OpenCspWeb.Live.Violations do
                 replace
               />
             </.pagination_item>
-            <.pagination_item :if={@page > 1}>
-              <.pagination_previous replace patch={filtered_path_for_page(assigns, @page - 1)} />
+            <.pagination_item :if={@filter.page > 1}>
+              <.pagination_previous replace patch={filtered_path_for_page(assigns, @filter.page - 1)} />
             </.pagination_item>
             <.pagination_item :for={{page_number, current_page?} <- pages(assigns)}>
               <.pagination_link
@@ -306,8 +288,8 @@ defmodule OpenCspWeb.Live.Violations do
                 <%= page_number %>
               </.pagination_link>
             </.pagination_item>
-            <.pagination_item :if={@page < page_count(assigns)}>
-              <.pagination_next replace patch={filtered_path_for_page(assigns, @page + 1)} />
+            <.pagination_item :if={@filter.page < page_count(assigns)}>
+              <.pagination_next replace patch={filtered_path_for_page(assigns, @filter.page + 1)} />
             </.pagination_item>
           </.pagination_content>
         </.pagination>
