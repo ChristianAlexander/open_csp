@@ -10,7 +10,6 @@ defmodule OpenCspWeb.ExportController do
       params
       |> Violations.parse()
       |> Violations.without_pagination()
-      |> dbg()
 
     conn =
       conn
