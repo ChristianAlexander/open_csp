@@ -61,7 +61,8 @@ defmodule OpenCsp.MixProject do
       {:bandit, "~> 1.5"},
       {:remote_ip, "~> 1.2"},
       {:salad_ui, "~> 0.5.1"},
-      {:ua_parser, "~> 1.9"}
+      {:ua_parser, "~> 1.9"},
+      {:nimble_csv, "~> 1.2"}
     ]
   end
 

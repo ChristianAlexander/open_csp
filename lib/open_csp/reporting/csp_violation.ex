@@ -71,6 +71,42 @@ defmodule OpenCsp.Reporting.CspViolation do
     changeset(%CspViolation{}, report)
   end
 
+  def csv_headers() do
+    [
+      "url",
+      "happened_at",
+      "disposition",
+      "status_code",
+      "blocked_url",
+      "document_url",
+      "referrer",
+      "original_policy",
+      "user_agent",
+      "sample",
+      "effective_directive",
+      "remote_ip",
+      "raw"
+    ]
+  end
+
+  def to_csv_row(violation) do
+    [
+      violation.url,
+      violation.happened_at,
+      violation.disposition,
+      violation.status_code,
+      violation.blocked_url,
+      violation.document_url,
+      violation.referrer,
+      violation.original_policy,
+      violation.user_agent,
+      violation.sample,
+      violation.effective_directive,
+      violation.remote_ip,
+      Jason.encode!(violation.raw)
+    ]
+  end
+
   defp cast_from_body(changeset, params, permitted) do
     body = get_in(params, ["body"]) || %{}
 

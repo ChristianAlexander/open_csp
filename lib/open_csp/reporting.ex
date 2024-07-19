@@ -35,6 +35,15 @@ defmodule OpenCsp.Reporting do
     %{violations: results, total_count: total_count}
   end
 
+  def stream_csp_violations(options \\ %{}) do
+    from(CspViolation)
+    |> with_filters(options)
+    |> with_search(options)
+    |> sort(options)
+    |> with_pagination(options)
+    |> Repo.stream()
+  end
+
   defp sort(query, %{sort_by: sort_by, sort_order: sort_order}) do
     order_by(query, {^sort_order, ^sort_by})
   end

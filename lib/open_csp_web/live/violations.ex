@@ -13,40 +13,20 @@ defmodule OpenCspWeb.Live.Violations do
 
   import OpenCspWeb.Components.Pagination
 
-  @max_page_limit 500
-
   def handle_params(params, _uri, socket) do
-    page_limit =
-      case Integer.parse(Map.get(params, "page_limit", "")) do
-        :error -> 50
-        {page_limit, _} -> min(page_limit, @max_page_limit)
-      end
-
-    page =
-      case Integer.parse(Map.get(params, "page", "")) do
-        :error -> 1
-        {page, _} -> max(page, 1)
-      end
-
-    filters = Map.get(params, "filters", []) |> as_validated_filters()
-
-    live? = page == 1 and not Keyword.has_key?(filters, :happened_before)
+    parsed_values = OpenCspWeb.Forms.Violations.parse(params)
 
     if connected?(socket) do
       Phoenix.PubSub.unsubscribe(OpenCsp.PubSub, "violations:all")
 
-      if live? do
+      if parsed_values.live? do
         Phoenix.PubSub.subscribe(OpenCsp.PubSub, "violations:all")
       end
     end
 
     socket =
       socket
-      |> assign(page_limit: page_limit)
-      |> assign(filters: filters)
-      |> assign(page: page)
-      |> assign(search_value: Map.get(params, "q", ""))
-      |> assign(live?: live?)
+      |> assign(parsed_values)
       |> refetch_violations()
 
     {:noreply, socket}
@@ -144,14 +124,16 @@ defmodule OpenCspWeb.Live.Violations do
   end
 
   defp filtered_path(assigns) do
-    query_params = %{
+    ~p"/violations?#{query_params(assigns)}"
+  end
+
+  defp query_params(assigns) do
+    %{
       filters: assigns.filters |> Enum.map(&as_query_param/1),
       page_limit: assigns.page_limit,
       q: assigns.search_value,
       page: assigns.page
     }
-
-    ~p"/violations?#{query_params}"
   end
 
   defp as_query_param({key, %DateTime{} = value}) do
@@ -184,34 +166,6 @@ defmodule OpenCspWeb.Live.Violations do
       String.contains?(String.downcase(violation.url), term) or
         String.contains?(String.downcase(violation.blocked_url), term)
     end)
-  end
-
-  defp as_validated_filters(filters) do
-    Enum.map(filters, fn
-      {"disposition", disposition} when disposition in ["enforce", "report"] ->
-        {:disposition, disposition}
-
-      {"happened_before", happened_before} when is_binary(happened_before) ->
-        with {:ok, instant, _} <- DateTime.from_iso8601(happened_before) do
-          {:happened_before, instant}
-        else
-          _ ->
-            nil
-        end
-
-      {"happened_after", happened_after} when is_binary(happened_after) ->
-        with {:ok, instant, _} <- DateTime.from_iso8601(happened_after) do
-          {:happened_after, instant}
-        else
-          _ ->
-            nil
-        end
-
-      _ ->
-        nil
-    end)
-    |> Enum.reject(&is_nil/1)
-    |> Keyword.new()
   end
 
   defp page_count(%{page_limit: page_size, page: current_page, total_count: total_count}) do

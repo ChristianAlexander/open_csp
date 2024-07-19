@@ -24,6 +24,7 @@ defmodule OpenCspWeb.Router do
 
     get "/", PageController, :home
     live "/violations", Live.Violations
+    get "/violations/export", ExportController, :export_violations
   end
 
   # Other scopes may use custom stacks.
