@@ -1,5 +1,6 @@
 defmodule OpenCspWeb.Router do
   use OpenCspWeb, :router
+  use ErrorTracker.Integrations.Plug
 
   pipeline :browser do
     plug :accepts, ["html"]
