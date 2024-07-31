@@ -28,6 +28,9 @@
             <.icon :if={current_disposition == "report"} name="hero-check" class="h-3 w-3 mr-2" />
             <span>Report</span>
           </.menu_item>
+          <.menu_item phx-click="crash">
+            <span>💥 CRASH</span>
+          </.menu_item>
         </.menu_group>
       </.menu>
     </.dropdown_menu_content>

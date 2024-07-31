@@ -62,7 +62,8 @@ defmodule OpenCsp.MixProject do
       {:remote_ip, "~> 1.2"},
       {:salad_ui, "~> 0.5.1"},
       {:ua_parser, "~> 1.9"},
-      {:nimble_csv, "~> 1.2"}
+      {:nimble_csv, "~> 1.2"},
+      {:error_tracker, "~> 0.1"}
     ]
   end
 

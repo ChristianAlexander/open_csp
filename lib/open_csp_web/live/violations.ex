@@ -65,6 +65,10 @@ defmodule OpenCspWeb.Live.Violations do
     {:noreply, push_patch(socket, to: filtered_path(socket.assigns), replace: true)}
   end
 
+  def handle_event("crash", _, socket) do
+    raise "Crash!"
+  end
+
   def handle_event("search", %{"_target" => ["search"], "search" => search_value}, socket) do
     socket =
       socket |> assign(search_value: search_value, page: 1)

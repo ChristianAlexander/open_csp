@@ -1,5 +1,7 @@
 defmodule OpenCspWeb.Router do
   use OpenCspWeb, :router
+  use ErrorTracker.Integrations.Plug
+  use ErrorTracker.Web, :router
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -46,6 +48,7 @@ defmodule OpenCspWeb.Router do
 
       live_dashboard "/dashboard", metrics: OpenCspWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
+      error_tracker_dashboard("/errors")
     end
   end
 end
